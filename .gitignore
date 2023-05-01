@@ -1,3 +1,5 @@
 .devcontainer
 tmp/*
 !tmp/.gitkeep
+*.mp3
+*.m4a

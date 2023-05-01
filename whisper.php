@@ -28,25 +28,25 @@ $html = <<<EOF
     document.getElementById("upload-button").addEventListener("click", function() {
         // ローディングアイコンを表示する
         document.getElementById("loading-icon").style.display = "block";
-        // document.getElementById("upload-button").setAttribute("disabled", true);
         // フォームを送信する
         var form = document.getElementById("my-form");
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "whisper.php");
         xhr.onreadystatechange = function() {
+            let res = JSON.parse(xhr.response);
             if (xhr.readyState === 4) {
-                console.info(xhr.response);
-                let res = JSON.parse(xhr.response);
-                console.info(res);
-                let anchor = document.createElement("a");
-                anchor.download = "download.txt";
-                anchor.href = res.filename;
-                console.info(anchor);
                 let result = document.getElementById("result");
-                result.appendChild(anchor);
-                let textnode = document.createTextNode("ファイルをダウンロードする");
-                anchor.appendChild(textnode);
-                // document.getElementById("upload-button").removeAttribute("disabled");
+                if (xhr.status === 200) {
+                    let anchor = document.createElement("a");
+                    anchor.download = "download.txt";
+                    anchor.href = res.filename;
+                    result.appendChild(anchor);
+                    let textnode = document.createTextNode("ファイルをダウンロードする");
+                    anchor.appendChild(textnode);
+                } else if (xhr.status === 400) {
+                    let textnode = document.createTextNode(res.message);
+                }
+
                 document.getElementById("loading-icon").style.display = "none";
             }
         };
@@ -59,82 +59,84 @@ EOF;
 echo $html;
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  if (isset($_FILES["audio_file"]) && $_FILES["audio_file"]["error"] == 0) {
-    // 作業ディレクトリ
-    $tmp_dir = "tmp/";
-    $allow_extensions = ["mp3", "mp4", "mpeg", "mpga", "m4a", "wav", "webm"];
-    // 拡張子を取得してファイルの種類を特定
-    $file_name = basename($_FILES["audio_file"]["name"]);
-    $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-    $file_type = "audio/";
-    if (in_array($file_extension, $allow_extensions)) {
-      $file_type .= $file_extension;
+    if (isset($_FILES["audio_file"]) && $_FILES["audio_file"]["error"] == 0) {
+        // 作業ディレクトリ
+        $tmp_dir = "tmp/";
+        $allow_extensions = ["mp3", "mp4", "mpeg", "mpga", "m4a", "wav", "webm"];
+        // 拡張子を取得してファイルの種類を特定
+        $file_name = basename($_FILES["audio_file"]["name"]);
+        $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        $file_type = "audio/";
+        if (in_array($file_extension, $allow_extensions)) {
+            $file_type .= $file_extension;
+        } else {
+            response_error("エラー: 対応していないファイルタイプです。");
+        }
+
+        $new_file_name = $tmp_dir . uniqid() . $file_name;
+        if (!move_uploaded_file($_FILES["audio_file"]["tmp_name"], $new_file_name)) {
+            response_error("エラー: ファイルをアップロードできませんでした。");
+        }
+        // APIの情報
+        $api_key = getenv('OPENAI_API_KEY');
+        $model_id = 'whisper-1';
+        $base_url = "https://api.openai.com";
+        // // 音声ファイルのパス
+        $audio_file_path = './' . $new_file_name;
+        // リクエストの準備
+        $headers = [
+            "Authorization: Bearer {$api_key}",
+            "Content-Type: multipart/form-data"
+        ];
+        $data = [
+            'response_format' => 'text',
+            'model' => $model_id,
+            'file' => $cfile = curl_file_create($audio_file_path, $file_type)
+        ];
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => "{$base_url}/v1/audio/transcriptions",
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => $headers,
+        ]);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+        // リクエスト送信
+        $response = curl_exec($curl);
+        if ($response === false) {
+            response_error(curl_error($curl));
+        }
+        curl_close($curl);
+        // 結果をファイルに保存する
+        $filename = './' . $tmp_dir . uniqid() . 'transciption.txt';
+        $file = fopen($filename, "w") or response_error("エラー:ファイルが開けません!");
+
+        fwrite($file, $response);
+        fclose($file);
+
+        // ファイルが正常に保存されたかどうかを確認する
+        if(!file_exists($filename)){
+            response_error("エラー：ファイルを保存できませんでした");
+        }
+        // // アップロードしたファイルは削除する
+        if (!unlink($audio_file_path)) {
+            // echo "音声ファイルを削除できませんでした。<br />\n";
+        }
+        header("HTTP/1.1 200 OK");
+        header("Content-Type: application/json; charset=utf-8");
+        echo json_encode(['filename' => $filename], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     } else {
-      die("対応していないファイルタイプです。");
+        response_error("エラー: ファイルがアップロードされていません。");
     }
-
-    $new_file_name = $tmp_dir . uniqid() . $file_name;
-    if (move_uploaded_file($_FILES["audio_file"]["tmp_name"], $new_file_name)) {
-      // echo "ファイルがアップロードされました。<br />\n";
-    } else {
-      die("ファイルをアップロードできませんでした。");
-    }
-    // APIの情報
-    $api_key = getenv('OPENAI_API_KEY');
-    $model_id = 'whisper-1';
-    $base_url = "https://api.openai.com";
-    // // 音声ファイルのパス
-    $audio_file_path = './' . $new_file_name;
-    // リクエストの準備
-    $headers = [
-      "Authorization: Bearer {$api_key}",
-      "Content-Type: multipart/form-data"
-    ];
-    $data = [
-      'response_format' => 'text',
-      'model' => $model_id,
-      'file' => $cfile = curl_file_create($audio_file_path, $file_type)
-    ];
-    $curl = curl_init();
-    curl_setopt_array($curl, [
-      CURLOPT_URL => "{$base_url}/v1/audio/transcriptions",
-      CURLOPT_POST => true,
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_HTTPHEADER => $headers,
-    ]);
-    curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-    // リクエスト送信
-    // echo "リクエスト送信中...<br />\n";
-    $response = curl_exec($curl);
-    if ($response === false) {
-      die(curl_error($curl));
-    }
-    curl_close($curl);
-    // 結果をファイルに保存する
-    $filename = './' . $tmp_dir . uniqid() . 'transciption.txt';
-    $file = fopen($filename, "w") or die("ファイルが開けません!");
-
-    fwrite($file, $response);
-
-    fclose($file);
-
-    // ファイルが正常に保存されたかどうかを確認する
-    if(file_exists($filename)){
-        // echo "テキストファイルに保存しました。<br /><br />\n";
-    } else {
-        die( "エラー: ファイルを保存できませんでした。");
-    }
-    // echo "<a href='$filename' download>ファイルをダウンロードする</a>\n";
-    // echo "<br />\n";
-    // // アップロードしたファイルは削除する
-    if (!unlink($audio_file_path)) {
-      // echo "音声ファイルを削除できませんでした。<br />\n";
-    }
-    header("HTTP/1.1 200 OK");
-    header("Content-Type: application/json; charset=utf-8");
-    echo json_encode(array('filename' =>$filename), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-  } else {
-    echo "ファイルがアップロードされていません。";
-  }
 }
-?>
+
+function response_error($message = 'エラーが発生しました') {
+    // ステータスコードの設定
+    header("HTTP/1.1 400 Bad Request");
+    // コンテンツタイプ
+    header("Content-Type: application/json; charset=utf-8");
+    // レスポンスボディにエラーの詳細を記載
+    $result = ['code' => 400, 'message' => $message];
+    echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    exit;
+}

@@ -3,57 +3,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 $html = <<<EOF
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Whisperによる文字起こし</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  </head>
-  <body>
-    <h1>文字起こしアプリ</h1>
-    <h2>音声ファイルをアップロードしてください</h2>
-    <p>動作確認済みファイルタイプは mp3, m4a です</p>
-    <p>ファイルサイズは25MB以内でお願いします</p>
-    <p>ファイルアップロード後、しばらくするとテキストファイルがダウンロードできます</p>
-    <form action="whisper.php" method="post" enctype="multipart/form-data" id="my-form">
-      <input type="file" name="audio_file" accept="audio/*"><br>
-      <input type="submit" value="アップロード" id="upload-button">
-    </form>
-    <div id="loading-icon" style="display:none;">
-      処理中...
-      <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
-    </div>
-    <div id="result" style="margin-top:24px;">
-    </div>
-    <script>
-    document.getElementById("upload-button").addEventListener("click", function() {
-        // ローディングアイコンを表示する
-        document.getElementById("loading-icon").style.display = "block";
-        // フォームを送信する
-        var form = document.getElementById("my-form");
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "whisper.php");
-        xhr.onreadystatechange = function() {
-            let res = JSON.parse(xhr.response);
-            if (xhr.readyState === 4) {
-                let result = document.getElementById("result");
-                if (xhr.status === 200) {
-                    let anchor = document.createElement("a");
-                    anchor.download = "download.txt";
-                    anchor.href = res.filename;
-                    result.appendChild(anchor);
-                    let textnode = document.createTextNode("ファイルをダウンロードする");
-                    anchor.appendChild(textnode);
-                } else if (xhr.status === 400) {
-                    let textnode = document.createTextNode(res.message);
-                }
+    <head>
+        <meta charset="UTF-8">
+        <title>Whisperによる文字起こし</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    </head>
+    <body>
+        <h1>文字起こしアプリ</h1>
+        <h2>音声ファイルをアップロードしてください</h2>
+        <p>動作確認済みファイルタイプは mp3, m4a です</p>
+        <p>ファイルサイズは25MB以内でお願いします</p>
+        <p>ファイルアップロード後、しばらくするとテキストファイルがダウンロードできます</p>
+        <form action="whisper.php" method="post" enctype="multipart/form-data" id="my-form">
+        <input type="file" name="audio_file" accept="audio/*"><br>
+        <input type="submit" value="アップロード" id="upload-button">
+        </form>
+        <div id="loading-icon" style="display:none;">
+        処理中...
+        <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
+        </div>
+        <div id="result" style="margin-top:24px;">
+        </div>
+        <script>
+        document.getElementById("upload-button").addEventListener("click", function() {
+            // ローディングアイコンを表示する
+            document.getElementById("loading-icon").style.display = "block";
+            // フォームを送信する
+            var form = document.getElementById("my-form");
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "whisper.php");
+            xhr.onreadystatechange = function() {
+                let res = JSON.parse(xhr.response);
+                if (xhr.readyState === 4) {
+                    let result = document.getElementById("result");
+                    if (xhr.status === 200) {
+                        let anchor = document.createElement("a");
+                        anchor.download = "download.txt";
+                        anchor.href = res.filename;
+                        result.appendChild(anchor);
+                        let textnode = document.createTextNode("ファイルをダウンロードする");
+                        anchor.appendChild(textnode);
+                    } else if (xhr.status === 400) {
+                        let textnode = document.createTextNode(res.message);
+                    }
 
-                document.getElementById("loading-icon").style.display = "none";
-            }
-        };
-        xhr.send(new FormData(form));
-    });
-    </script>
-  </body>
+                    document.getElementById("loading-icon").style.display = "none";
+                }
+            };
+            xhr.send(new FormData(form));
+        });
+        </script>
+    </body>
 </html>
 EOF;
 echo $html;

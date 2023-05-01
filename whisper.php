@@ -1,8 +1,12 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+$html = <<<EOF
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
     <title>Whisperによる文字起こし</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   </head>
   <body>
     <h1>文字起こしアプリ</h1>
@@ -10,13 +14,50 @@
     <p>動作確認済みファイルタイプは mp3, m4a です</p>
     <p>ファイルサイズは25MB以内でお願いします</p>
     <p>ファイルアップロード後、しばらくするとテキストファイルがダウンロードできます</p>
-    <form action="whisper.php" method="post" enctype="multipart/form-data">
+    <form action="whisper.php" method="post" enctype="multipart/form-data" id="my-form">
       <input type="file" name="audio_file" accept="audio/*"><br>
-      <input type="submit" value="アップロード">
+      <input type="submit" value="アップロード" id="upload-button">
     </form>
+    <div id="loading-icon" style="display:none;">
+      処理中...
+      <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
+    </div>
+    <div id="result" style="margin-top:24px;">
+    </div>
+    <script>
+    document.getElementById("upload-button").addEventListener("click", function() {
+        // ローディングアイコンを表示する
+        document.getElementById("loading-icon").style.display = "block";
+        // document.getElementById("upload-button").setAttribute("disabled", true);
+        // フォームを送信する
+        var form = document.getElementById("my-form");
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "whisper.php");
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                console.info(xhr.response);
+                let res = JSON.parse(xhr.response);
+                console.info(res);
+                let anchor = document.createElement("a");
+                anchor.download = "download.txt";
+                anchor.href = res.filename;
+                console.info(anchor);
+                let result = document.getElementById("result");
+                result.appendChild(anchor);
+                let textnode = document.createTextNode("ファイルをダウンロードする");
+                anchor.appendChild(textnode);
+                // document.getElementById("upload-button").removeAttribute("disabled");
+                document.getElementById("loading-icon").style.display = "none";
+            }
+        };
+        xhr.send(new FormData(form));
+    });
+    </script>
   </body>
 </html>
-<?php
+EOF;
+echo $html;
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (isset($_FILES["audio_file"]) && $_FILES["audio_file"]["error"] == 0) {
     // 作業ディレクトリ
@@ -34,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $new_file_name = $tmp_dir . uniqid() . $file_name;
     if (move_uploaded_file($_FILES["audio_file"]["tmp_name"], $new_file_name)) {
-      echo "ファイルがアップロードされました。<br />\n";
+      // echo "ファイルがアップロードされました。<br />\n";
     } else {
       die("ファイルをアップロードできませんでした。");
     }
@@ -63,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
     curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
     // リクエスト送信
-    echo "リクエスト送信中...<br />\n";
+    // echo "リクエスト送信中...<br />\n";
     $response = curl_exec($curl);
     if ($response === false) {
       die(curl_error($curl));
@@ -79,16 +120,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ファイルが正常に保存されたかどうかを確認する
     if(file_exists($filename)){
-        echo "テキストファイルに保存しました。<br /><br />\n";
+        // echo "テキストファイルに保存しました。<br /><br />\n";
     } else {
         die( "エラー: ファイルを保存できませんでした。");
     }
-    echo "<a href='$filename' download>ファイルをダウンロードする</a>\n";
-    echo "<br />\n";
+    // echo "<a href='$filename' download>ファイルをダウンロードする</a>\n";
+    // echo "<br />\n";
     // // アップロードしたファイルは削除する
     if (!unlink($audio_file_path)) {
-      echo "音声ファイルを削除できませんでした。<br />\n";
+      // echo "音声ファイルを削除できませんでした。<br />\n";
     }
+    header("HTTP/1.1 200 OK");
+    header("Content-Type: application/json; charset=utf-8");
+    echo json_encode(array('filename' =>$filename), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
   } else {
     echo "ファイルがアップロードされていません。";
   }

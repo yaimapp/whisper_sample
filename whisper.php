@@ -8,6 +8,7 @@
     <h1>文字起こしアプリ</h1>
     <h2>音声ファイルをアップロードしてください</h2>
     <p>動作確認済みファイルタイプは mp3, m4a です</p>
+    <p>ファイルサイズは25MB以内でお願いします</p>
     <p>ファイルアップロード後、しばらくするとテキストファイルがダウンロードできます</p>
     <form action="whisper.php" method="post" enctype="multipart/form-data">
       <input type="file" name="audio_file" accept="audio/*"><br>

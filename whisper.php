@@ -45,6 +45,7 @@ $html = <<<EOF
                         anchor.appendChild(textnode);
                     } else if (xhr.status === 400) {
                         let textnode = document.createTextNode(res.message);
+                        result.appendChild(textnode);
                     }
 
                     document.getElementById("loading-icon").style.display = "none";
@@ -62,7 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_FILES["audio_file"]) && $_FILES["audio_file"]["error"] == 0) {
         // 作業ディレクトリ
         $tmp_dir = "tmp/";
-        $allow_extensions = ["mp3", "mp4", "mpeg", "mpga", "m4a", "wav", "webm"];
+        // 対応している音声ファイル
+        $allow_extensions = ["mp3", "m4a", "wav", "mpga"];
         // 拡張子を取得してファイルの種類を特定
         $file_name = basename($_FILES["audio_file"]["name"]);
         $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
@@ -72,13 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             response_error("エラー: 対応していないファイルタイプです。");
         }
-
+        // ファイルをアップロードして作業ディレクトリに保存
         $new_file_name = $tmp_dir . uniqid() . $file_name;
         if (!move_uploaded_file($_FILES["audio_file"]["tmp_name"], $new_file_name)) {
             response_error("エラー: ファイルをアップロードできませんでした。");
         }
         // APIの情報
-        $api_key = getenv('OPENAI_API_KEY');
+        $api_key = getenv('OPENAI_API_KEY'); // 環境変数から読み込む
         $model_id = 'whisper-1';
         $base_url = "https://api.openai.com";
         // // 音声ファイルのパス
@@ -91,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = [
             'response_format' => 'text',
             'model' => $model_id,
-            'file' => $cfile = curl_file_create($audio_file_path, $file_type)
+            'file' => curl_file_create($audio_file_path, $file_type)
         ];
         $curl = curl_init();
         curl_setopt_array($curl, [
@@ -118,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if(!file_exists($filename)){
             response_error("エラー：ファイルを保存できませんでした");
         }
-        // // アップロードしたファイルは削除する
+        // アップロードしたファイルは削除する
         if (!unlink($audio_file_path)) {
             // echo "音声ファイルを削除できませんでした。<br />\n";
         }

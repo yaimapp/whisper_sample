@@ -32,3 +32,15 @@ export OPENAI_API_KEY=your_api_key
 - しばらくするとテキストファイルのダウンロードリンクが表示されます
 - ファイルサイズは25MB以内
 - 対応する音声ファイルの種類は mp3, m4a, wav, mpga
+
+### シェルスクリプト
+- 動作確認用シェルスクリプト
+- 環境変数に OPENAI_API_KEY を設定
+```
+$ export OPENAI_API_KEY=your_api_key
+```
+- 同じディレクトリに voice.mp3 がある場合次のように実行
+```
+$ ./whisper.sh voice.mp3
+```
+- 変換したテキストが帰ってくる

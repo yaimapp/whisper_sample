@@ -14,9 +14,9 @@ $html = <<<EOF
         <p>動作確認済みファイルタイプは mp3, m4a です</p>
         <p>ファイルサイズは25MB以内でお願いします</p>
         <p>ファイルアップロード後、しばらくするとテキストファイルがダウンロードできます</p>
-        <form action="whisper.php" method="post" enctype="multipart/form-data" id="my-form">
+        <form enctype="multipart/form-data" id="my-form">
         <input type="file" name="audio_file" accept="audio/*"><br>
-        <input type="submit" value="アップロード" id="upload-button">
+        <input type="button" value="アップロード" id="upload-button">
         </form>
         <div id="loading-icon" style="display:none;">
         処理中...
@@ -32,22 +32,22 @@ $html = <<<EOF
             var form = document.getElementById("my-form");
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "whisper.php");
-            xhr.responseType = 'json';
             xhr.onreadystatechange = function() {
-                let res = JSON.parse(xhr.response);
                 if (xhr.readyState === 4) {
+					console.info(xhr.response);
+					let res = JSON.parse(xhr.response);
                     let result = document.getElementById("result");
-                    let anchor = document.createElement("a");
-                    anchor.download = "download.txt";
-                    anchor.href = res.filename;
-                    result.appendChild(anchor);
-                    let textnode = document.createTextNode("ファイルをダウンロードする");
-                    anchor.appendChild(textnode);
-                    // if (xhr.status === 200) {
-                    // } else if (xhr.status === 400) {
-                    //     let textnode = document.createTextNode(res.message);
-                    //     result.appendChild(textnode);
-                    // }
+                    if (xhr.status === 200) {
+						let anchor = document.createElement("a");
+						anchor.download = "download.txt";
+						anchor.href = res.filename;
+						result.appendChild(anchor);
+						let textnode = document.createTextNode("ファイルをダウンロードする");
+						anchor.appendChild(textnode);
+                    } else if (xhr.status === 400) {
+                        let textnode = document.createTextNode(res.message);
+                        result.appendChild(textnode);
+                    }
                     document.getElementById("loading-icon").style.display = "none";
                 }
             };

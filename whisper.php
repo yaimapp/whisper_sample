@@ -32,6 +32,7 @@ $html = <<<EOF
             var form = document.getElementById("my-form");
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "whisper.php");
+            xhr.responseType = 'json';
             xhr.onreadystatechange = function() {
                 let res = JSON.parse(xhr.response);
                 if (xhr.readyState === 4) {
@@ -125,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         header("HTTP/1.1 200 OK");
         header("Content-Type: application/json; charset=utf-8");
-        return json_encode(['filename' => $filename], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        echo json_encode(['filename' => $filename], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     } else {
         response_error("エラー: ファイルがアップロードされていません。");
     }

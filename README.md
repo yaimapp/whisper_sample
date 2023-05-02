@@ -49,4 +49,4 @@ $ export OPENAI_API_KEY=your_api_key
 ```
 $ ./whisper.sh voice.mp3
 ```
-- 変換したテキストが帰ってくる
+- 変換したテキストが表示されます

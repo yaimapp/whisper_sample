@@ -125,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         header("HTTP/1.1 200 OK");
         header("Content-Type: application/json; charset=utf-8");
-        echo json_encode(['filename' => $filename], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return json_encode(['filename' => $filename], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     } else {
         response_error("エラー: ファイルがアップロードされていません。");
     }

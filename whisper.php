@@ -36,18 +36,17 @@ $html = <<<EOF
                 let res = JSON.parse(xhr.response);
                 if (xhr.readyState === 4) {
                     let result = document.getElementById("result");
-                    if (xhr.status === 200) {
-                        let anchor = document.createElement("a");
-                        anchor.download = "download.txt";
-                        anchor.href = res.filename;
-                        result.appendChild(anchor);
-                        let textnode = document.createTextNode("ファイルをダウンロードする");
-                        anchor.appendChild(textnode);
-                    } else if (xhr.status === 400) {
-                        let textnode = document.createTextNode(res.message);
-                        result.appendChild(textnode);
-                    }
-
+                    let anchor = document.createElement("a");
+                    anchor.download = "download.txt";
+                    anchor.href = res.filename;
+                    result.appendChild(anchor);
+                    let textnode = document.createTextNode("ファイルをダウンロードする");
+                    anchor.appendChild(textnode);
+                    // if (xhr.status === 200) {
+                    // } else if (xhr.status === 400) {
+                    //     let textnode = document.createTextNode(res.message);
+                    //     result.appendChild(textnode);
+                    // }
                     document.getElementById("loading-icon").style.display = "none";
                 }
             };

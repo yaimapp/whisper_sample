@@ -11,7 +11,7 @@ $html = <<<EOF
     <body>
         <h1>文字起こしアプリ</h1>
         <h2>音声ファイルをアップロードしてください</h2>
-        <p>動作確認済みファイルタイプは mp3, m4a です</p>
+        <p>動作確認済みファイルタイプは mp3, m4a, wav です</p>
         <p>ファイルサイズは25MB以内でお願いします</p>
         <p>ファイルアップロード後、しばらくするとテキストファイルがダウンロードできます</p>
         <form enctype="multipart/form-data" id="my-form">
@@ -34,7 +34,6 @@ $html = <<<EOF
             xhr.open("POST", "whisper.php");
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
-					console.info(xhr.response);
 					let res = JSON.parse(xhr.response);
                     let result = document.getElementById("result");
                     if (xhr.status === 200) {

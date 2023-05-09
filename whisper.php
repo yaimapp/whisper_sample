@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $filename = './' . $tmp_dir . uniqid() . 'transciption.txt';
         $file = fopen($filename, "w") or response_error("エラー:ファイルが開けません!");
         foreach ($resobject->segments as $item) {
-            $time = (string)$item->start . '-' . (string)$item->end;
+            $time = formatTime($item->start) . '-' . formatTime($item->end);
             $text = $item->text;
             fwrite($file, "{$time} {$text}\n");
         }
@@ -144,4 +144,12 @@ function response_error($message = 'エラーが発生しました') {
     $result = ['code' => 400, 'message' => $message];
     echo json_encode($result, JSON_UNESCAPED_UNICODE);
     exit;
+}
+function formatTime($seconds) {
+    $hours = floor($seconds / 3600);
+    $minutes = floor(($seconds - ($hours * 3600)) / 60);
+    $seconds = $seconds - ($hours * 3600) - ($minutes * 60);
+    $seconds = floor($seconds);
+
+    return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
 }

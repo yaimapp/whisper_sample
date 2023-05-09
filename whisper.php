@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "Content-Type: multipart/form-data"
         ];
         $data = [
-            'response_format' => 'text',
+            'response_format' => 'verbose_json',
             'model' => $model_id,
             'file' => curl_file_create($audio_file_path, $file_type)
         ];
@@ -108,11 +108,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             response_error(curl_error($curl));
         }
         curl_close($curl);
+        $resobject = json_decode($response);
         // 結果をファイルに保存する
         $filename = './' . $tmp_dir . uniqid() . 'transciption.txt';
         $file = fopen($filename, "w") or response_error("エラー:ファイルが開けません!");
-
-        fwrite($file, $response);
+        foreach ($resobject->segments as $item) {
+            $time = (string)$item->start . '-' . (string)$item->end;
+            $text = $item->text;
+            fwrite($file, "{$time} {$text}\n");
+        }
         fclose($file);
 
         // ファイルが正常に保存されたかどうかを確認する

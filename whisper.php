@@ -10,6 +10,7 @@ $html = <<<EOF
     </head>
     <body>
         <h1>文字起こしアプリ</h1>
+		<p>ver 0.0.2</p>
         <h2>音声ファイルをアップロードしてください</h2>
         <p>動作確認済みファイルタイプは mp3, m4a, wav です</p>
         <p>ファイルサイズは25MB以内でお願いします</p>
@@ -38,7 +39,7 @@ $html = <<<EOF
                     let result = document.getElementById("result");
                     if (xhr.status === 200) {
 						let anchor = document.createElement("a");
-						anchor.download = "download.txt";
+						anchor.download = "";
 						anchor.href = res.filename;
 						result.appendChild(anchor);
 						let textnode = document.createTextNode("ファイルをダウンロードする");
